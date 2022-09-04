@@ -1,0 +1,389 @@
+local logicavisual = {}
+local player = game.Players.LocalPlayer
+local Players = game:GetService("Players")
+local RS = game:GetService("RunService")
+local Debris = game:GetService("Debris")
+local remote = game.ReplicatedStorage.Remotes
+local PostEffectsEngine = require(game.ReplicatedStorage.PostEffectsEngine)
+local defaultSettings = {  
+	["downpower"] = 200,
+	["maxDownpower"] = -100,
+	["PowerToFly"] = 100,
+	["VelocityCount"] = Vector3.new(0,50,0)
+}
+local MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+
+
+ 
+function logicavisual.Controller(Player,valueobj)
+	local name 
+	if valueobj["LoadType"] == "Effect" then
+		name ="Effects"
+	elseif valueobj["LoadType"] == "Particle" then
+		name ="ParticleEffects"
+	elseif valueobj["LoadType"] == "Sound" then
+		name ="Sounds"
+	end
+	local Type =game.ReplicatedStorage.Remotes:FindFirstChild(name) 
+	spawn(function()
+	if valueobj["Fire"] == "FireAllClients" or valueobj["Fire"] == nil then
+		Type:FireAllClients(Player,valueobj)
+	elseif  valueobj["Fire"] == "FireClient" then	
+		Type:FireClient(Player,Player,valueobj)
+	end
+	end)
+end
+function logicavisual.SetAnimation(Hm,AnimFolder,SpeedAnim)
+	local anim
+	if Hm ~= nil and AnimFolder.AnimationId ~= nil then
+		anim = Hm:LoadAnimation(AnimFolder)
+		anim:Play(SpeedAnim)
+	end
+	return anim 
+end
+function logicavisual.SetCutScene(Player,valueobj,valueobj2)
+	local cutscenerem = remote:WaitForChild("CutScene")
+		local pla = game.Players:GetPlayerFromCharacter(valueobj["Parent"])
+		cutscenerem:FireClient(pla,pla,valueobj,valueobj2)
+end
+function logicavisual.KnockBackSystem(player1,PlayerChar,SettingsToFly,TypeKnockBack,upvector)
+	local charmy = player1.Character
+	local Hm = PlayerChar:WaitForChild("Humanoid")
+	local rp = PlayerChar:WaitForChild("HumanoidRootPart")
+	local Torso = PlayerChar:WaitForChild("Torso")
+	local io2 =nil
+	local recover = false
+	local nothittowall = true
+	local io33 = {PlayerChar,
+		0.1,
+		Color3.new(1, 1, 1),
+		1,
+		false,
+		Vector3.new(0,0,0),
+		0,
+		0.1,
+		5,
+		4
+	}
+	local function xui(char,enable) ----- -
+		local instances = PlayerChar:WaitForChild("Instances")
+		if enable == true then
+			logicavisual.Marker(PlayerChar,SettingsToFly["TimeToFly"],"CutScene")
+		elseif enable == false then
+			logicavisual.DisableState(PlayerChar,"CutScene")
+		end
+	end
+	if Hm.Health > 0 then
+		logicavisual.StopPlayer(Hm,true)
+		PlayerChar.Humanoid.PlatformStand = true
+		for i, v in pairs(rp:GetChildren()) do
+			if v:IsA("BodyPosition") or v:IsA("BodyGyro") then
+				v:Destroy()
+			end
+		end
+		rp.Velocity = Vector3.new(0, 0, 0)
+		xui(PlayerChar,true)
+		logicavisual.Controller(player,{["Fire"]="FireAllClients",["LoadType"]="Particle",["Effect"]=game.ReplicatedStorage.Effects.ParticleEffect.SmallSmokeExplosion,["Time"] =1,["Part"] = true,["Parent"]=Torso,})
+		if TypeKnockBack == nil or TypeKnockBack == "Normal" then
+			local KnockerRootWithRootY = charmy.HumanoidRootPart.Position * Vector3.new(1, 0, 1) + Vector3.new(0, charmy.HumanoidRootPart.Position.Y, 0)
+			local HitWall = false
+			local HitGround = false
+			local deb1 = false
+			local BG = logicavisual.bodymover({ "BodyGyro", rp, Vector3.new(math.huge, math.huge, math.huge),  CFrame.new(rp.Position, KnockerRootWithRootY), SettingsToFly["TimeToFly"]})
+			BG.P = 70000
+			BG.D = 100
+			local Velocity =(-rp.CFrame.lookVector  *SettingsToFly["PowerToFly"]) + Vector3.new(0,upvector,0)
+			local BV = logicavisual.bodymover({ "BodyVelocity", rp, Vector3.new(math.huge, math.huge, math.huge), Velocity, SettingsToFly["TimeToFly"]})
+			BV.P = 4000
+			local floorhit=logicavisual.SetAnimation(Hm,game.ReplicatedStorage.Animatons.GenericAnimationXyiation.floorhit,0)
+			local FloorIdle=logicavisual.SetAnimation(Hm,game.ReplicatedStorage.Animatons.GenericAnimationXyiation.FloorIdle,0)
+			FloorIdle:Stop()
+			local HitWallIdle=logicavisual.SetAnimation(Hm,game.ReplicatedStorage.Animatons.GenericAnimationXyiation.HitWallIdle,0)
+			HitWallIdle:Stop()
+			floorhit:Stop()
+			game.Debris:AddItem(BV,SettingsToFly["TimeToFly"])
+			game.Debris:AddItem(BG,SettingsToFly["TimeToFly"])
+			local collideParams = RaycastParams.new()
+			collideParams.FilterDescendantsInstances = {charmy,workspace.XUETA,PlayerChar}
+			collideParams.FilterType = Enum.RaycastFilterType.Blacklist
+			local	flyhit = logicavisual.SetAnimation(Hm,game.ReplicatedStorage.Animatons.GenericAnimationXyiation.flyhit,0)
+			spawn(function()
+				if not BV or not BV.Parent then
+					PlayerChar.Humanoid.PlatformStand = false
+					HitWallIdle:Stop()
+					FloorIdle:Stop()
+				end
+			end)
+			local prevVelocity = Velocity
+			while BV and BV.Parent do
+				local stepped = RS.Heartbeat:Wait()
+				local velocityY = prevVelocity.Y
+				local newVelocity = prevVelocity * Vector3.new(1, 0, 1) + Vector3.new(0, math.max((velocityY - SettingsToFly["downpower"] * stepped),  SettingsToFly["maxDownpower"]), 0)
+				local collideResults = workspace:Raycast(rp.Position, newVelocity.Unit * (3 + stepped), collideParams)
+				prevVelocity = newVelocity
+				if collideResults then
+					if newVelocity.Y  < -Velocity.Y then
+						flyhit:Stop()
+						floorhit:Play()
+						spawn(function()
+							local trans = logicavisual.CreateTween(BV, { 0.75, Enum.EasingStyle.Linear, Enum.EasingDirection.In, 0, false, 0 }, {
+								Velocity = Vector3.new(0, 0, 0)
+							}, true)
+						end)
+						wait(Velocity ==Vector3.new(0, 0, 0))
+						floorhit:Stop()
+						local FloorStartIdle =logicavisual.SetAnimation(Hm,game.ReplicatedStorage.Animatons.GenericAnimationXyiation.FloorStartIdle,0)
+						FloorIdle:Play()
+						logicavisual.Controller(player,{["Fire"]="FireAllClients",["LoadType"]="Particle",["Effect"]=game.ReplicatedStorage.Effects.ParticleEffect.SmokeExplosion,["Time"] =SettingsToFly["TimeToFly"]/2,["Part"] = true,["Parent"]=Torso,})
+						HitGround = true
+						break
+					elseif newVelocity.Y  > -Velocity.Y then
+						logicavisual.Controller(player,{["1"] ="Rocks",["LoadType"]="Effect",["Fire"]="FireAllClients",["Effect"]=game.ReplicatedStorage.Effects.Dash,["Time"] =3,["CFrame"] =rp.CFrame,["Part"]=collideResults.Instance,["Count"]=10,["SizeCounter"]=2,})
+						flyhit:Stop()
+						logicavisual.Controller(player,{["Fire"]="FireAllClients",["LoadType"]="Particle",["Effect"]=game.ReplicatedStorage.Effects.ParticleEffect.SmokeExplosion,["Time"] =1,["Part"] = true,["Parent"]=Torso,})
+						PostEffectsEngine.Blur(PlayerChar,{["Type"]="Little",["MaxDistance"]=7,["Position"]=rp.Position,["Find"]=true})
+						PostEffectsEngine.Explosion(PlayerChar,rp.Position,7,true)
+						logicavisual.Controller(player,{["Fire"]="FireAllClients",["LoadType"]="Sound",["Sound"]=game.ReplicatedStorage.Sounds.Generic.GroundHit,["Parent"]=Torso,})
+						logicavisual.Controller(player,{["1"] ="Smoke",["LoadType"]="Effect",["Effect"]=game.ReplicatedStorage.Effects.Smoke,["Time"] =5,["CFrame"] =rp.CFrame *CFrame.new(0,0,0) * CFrame.Angles(math.rad(-90),0,0),})
+						local HitAndRecoverWall =	logicavisual.SetAnimation(Hm,game.ReplicatedStorage.Animatons.GenericAnimationXyiation.HitAndRecoverWall,0)
+						HitWallIdle:Play()
+						BV.Velocity = Vector3.new(0, 0, 0)
+						floorhit:Stop()
+						HitWall = true
+						break
+					end
+				else
+	
+					BV.Velocity = newVelocity
+				end
+			end
+		
+			wait(SettingsToFly["TimeToFly"])
+			BV.Velocity = Vector3.new(0, 0, 0)
+			rp.Velocity = Vector3.new(0, 0, 0)
+			if HitWall == true then
+				logicavisual.Marker(PlayerChar,1,"CutScene")
+				local HitAndRecoverWall =	logicavisual.SetAnimation(Hm,game.ReplicatedStorage.Animatons.GenericAnimationXyiation.HitAndRecoverWall,0)
+				local io2 = logicavisual.bodymover({ "BodyVelocity", rp, Vector3.new(math.huge, math.huge, math.huge), rp.CFrame.lookVector*10 ,0.1 })
+				
+				HitWallIdle:Stop()
+			
+			elseif HitGround == true then
+				logicavisual.Marker(PlayerChar,1,"CutScene")
+				local recover1 =	logicavisual.SetAnimation(Hm,game.ReplicatedStorage.Animatons.GenericAnimationXyiation.Recover1,0)
+				local io2 = logicavisual.bodymover({ "BodyVelocity", rp, Vector3.new(math.huge, math.huge, math.huge), -rp.CFrame.lookVector*10 ,0.1 })
+				FloorIdle:Stop()
+			end
+			if flyhit.isPlaying then
+				flyhit:Stop()
+			end
+			game.ReplicatedStorage.Remotes.Bodylight:FireAllClients(player,io33)
+			BV:Destroy()
+			BG:Destroy()
+			logicavisual.StopPlayer(Hm,false)
+			PlayerChar.Humanoid.PlatformStand = false	
+		end
+
+	end		
+end
+------------------------------------------
+ 
+function logicavisual.StopPlayer(Hm,ShouldStop)
+	local char = Hm.Parent
+	if ShouldStop == true then
+Hm.WalkSpeed = 0
+Hm.JumpPower = 0
+Hm.AutoRotate = false
+	elseif ShouldStop == false then
+		Hm.WalkSpeed = char:WaitForChild("Instances"):WaitForChild("WalkSpeed").Value
+		Hm.JumpPower = char:WaitForChild("Instances"):WaitForChild("JumpPower").Value
+Hm.AutoRotate = true
+
+	end
+end
+function logicavisual.bodymover(...)
+	local whwilladd, parenti, forsi, positi, timeti = unpack(...)
+	for vga1, vga2 in pairs(parenti:GetChildren()) do
+		if vga2:IsA(whwilladd) then
+			vga2:Destroy()
+		end
+	end
+	local part = Instance.new(whwilladd)
+	part.Name = "Client"
+	if whwilladd == "BodyPosition" then
+		part.MaxForce = forsi
+		part.Position = positi
+		part.Parent = parenti
+	elseif whwilladd == "BodyGyro" then
+		part.MaxTorque = forsi
+		part.CFrame = positi
+		part.Parent = parenti
+	elseif whwilladd == "BodyVelocity" then
+		part.MaxForce = forsi
+		part.Velocity = positi
+		part.Parent = parenti
+	end
+	if timeti then
+		game.Debris:AddItem(part, timeti)
+	end
+	return part
+end
+function logicavisual.Marker(enemychar,timetolive,Type)
+	local instances = enemychar:WaitForChild("Instances")
+	local hit = Instance.new("BoolValue",instances)
+	if Type == nil or Type == "Hit" then
+		hit.Name ="Hit"
+	elseif Type ~= nil and Type ~="Hit" then
+		hit.Name =Type
+	end
+	game.Debris:AddItem(hit,timetolive)
+end
+function logicavisual.Weld(firstobjweld, secondobj, val,obj,timedat)
+	if obj =="Weld" or obj == nil then
+		local weld = Instance.new("Weld")
+		weld.Name =  "Weld"
+		weld.Part0 = firstobjweld
+		weld.Part1 = secondobj
+		if val then
+			weld.C0 = val
+		end
+		weld.Parent = secondobj
+		if timedat then
+			game.Debris:AddItem(weld,timedat)
+		else	
+
+		end
+		return weld
+	elseif obj =="AnimWeld" then
+		local weld = Instance.new("Motor6D")
+		weld.Name =  "Motor6D"
+		weld.Part0 = firstobjweld
+		weld.Part1 = secondobj
+		if val then
+			weld.C0 = val
+		end
+		weld.Parent = secondobj
+		if timedat then
+			game.Debris:AddItem(weld,timedat)
+		else	
+
+		end
+		return weld
+	elseif obj == "BonusAnimWeld" then
+		local obj = secondobj:Clone()
+		local objnamesaver = obj.Name
+		obj.Parent = secondobj
+		local objWeldFile = obj:findFirstChild(objnamesaver)
+		objWeldFile.Part0 = firstobjweld
+		objWeldFile.Part1 = obj
+		game.Debris:AddItem(obj,timedat)
+		return obj
+	end
+end
+function logicavisual.CreateTween(obj, timetweenandtype, dis, boolvalue)
+	local tween = game:GetService("TweenService"):Create(obj, TweenInfo.new(unpack(timetweenandtype)), dis)
+	if boolvalue then
+		tween:Play()
+		wait(0.35)
+	end
+	return tween
+end
+function logicavisual.Damage(player,enchar,damagemultiple,EnableShowDamage)
+	local char = player.Character
+	local inst = enchar:WaitForChild("Instances")
+	local cinst = char:WaitForChild("Instances")
+	local def = inst:WaitForChild("Defense")
+	local atk = cinst:WaitForChild("Attack")
+	local eHm = enchar:WaitForChild("Humanoid")
+	local damage = (atk.Value/def.Value) * atk.Value/damagemultiple
+	eHm:TakeDamage(damage)
+	if EnableShowDamage then
+	remote.ClientActive:InvokeClient(player,player,{"ShowDamage",damage})
+		end
+		return damage
+end
+function logicavisual.CharactersRotatorTo(WhoEnemyWillBeRotated,EnemyRP,CharRp)
+	spawn(function()
+		if WhoEnemyWillBeRotated.ClassName =="Model" then
+			WhoEnemyWillBeRotated:SetPrimaryPartCFrame(CFrame.new(EnemyRP.Position,CharRp.CFrame.p))
+		elseif WhoEnemyWillBeRotated.ClassName =="Part" then
+			EnemyRP.CFrame =CFrame.new(EnemyRP.Position,CharRp.CFrame)
+		end
+
+	end)
+end
+
+function logicavisual.CheckState(val)
+	if val["Char"] == nil then
+		local char = player.Character or player.CharacterAdded:Wait()
+		local instances = char:WaitForChild("Instances")
+		if not instances:FindFirstChild(val["State"]) then
+			return false
+		end
+	elseif val["Char"] ~= nil then
+		local instances = val["Char"]:WaitForChild("Instances")
+		if not instances:FindFirstChild(val["State"])  then
+			return false
+		end
+	end
+	return true
+end
+function logicavisual.DisableState(char,State)
+	local inst = char:WaitForChild("Instances")
+	for i,v in pairs(inst:GetChildren()) do
+		if v.Name ~= "Attack" and v.Name ~="Defense" and v.Name ~="JumpPower" and v.Name ~="WalkSpeed" then
+		if v.Name == State then
+			v:Destroy()
+		else
+			v:Destroy()
+		end
+		end
+	end
+end
+function logicavisual.HitBoxPartCreator(Parent,Size,CFrameHitBox,Time,Anchored)
+	local hitBox = Instance.new("Part",Parent)
+	hitBox.Size =Size
+	hitBox.CanTouch=true
+	hitBox.CanCollide=false
+	hitBox.CastShadow=false
+	hitBox.Locked = true
+	hitBox.Massless = true
+	hitBox.CFrame = CFrameHitBox
+	hitBox.Transparency = 1
+
+
+	if Anchored == false or nil then 
+else
+	hitBox.Anchored=true
+end
+	game.Debris:AddItem(hitBox,Time)
+	return hitBox
+end
+function logicavisual.MouseDistanceLimit(rp,Mouse, LimitCount)
+	local cf
+	if not (LimitCount < (Mouse - rp.Position).magnitude) then
+		return Mouse
+	end
+	cf = (CFrame.new(rp.Position, Mouse) * CFrame.new(0, 0, -LimitCount)).p
+	return cf
+end
+function logicavisual.GetState(char)
+	local inst = char:WaitForChild("Instances")
+	if not inst:FindFirstChild("CutScene") then
+	  if inst:FindFirstChild("Attacking")   then
+	    	return "Attacking"
+	  elseif  inst:FindFirstChild("Stan") then
+		 	return "Stan"
+	  elseif  inst:FindFirstChild("Hit")  then
+			return "Hit"
+	  elseif inst:FindFirstChild("Blocking") then
+			return "Blocking"
+	  elseif not inst:FindFirstChild("Attacking") and not inst:FindFirstChild("Stan") and not inst:FindFirstChild("Hit")  and not inst:FindFirstChild("Blocking") then
+			return nil
+		end
+	elseif 	 inst:FindFirstChild("CutScene") then
+		return "CutScene"
+	end
+	
+end
+return logicavisual
