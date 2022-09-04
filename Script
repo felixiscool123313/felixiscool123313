@@ -1,0 +1,283 @@
+local logicavisualmodule = require(game.ReplicatedStorage.logicavisualmodule)
+local PostEffectsEngine = require(game.ReplicatedStorage.PostEffectsEngine)
+local rem = script.Parent.Remote
+
+rem.OnServerInvoke = function(player,nl,nl2,valueobj)
+	local char = player.Character
+	local rp = char:WaitForChild("HumanoidRootPart")
+	local la = char:WaitForChild("Left Arm")
+	local Hm = char:WaitForChild("Humanoid")
+	
+	local tabl1
+	local tabl2
+	local function SlashTexMiniControl(Time)
+		local Katana = valueobj["Katana"]
+		local Trail=Katana:WaitForChild("SwordTrail")
+		spawn(function()
+			Trail.Enabled = true
+			wait(Time)
+			Trail.Enabled = false
+		end)
+	end
+	if valueobj["Hit"] then
+		local enchar = valueobj["Hit"]
+		local enrp = enchar:WaitForChild("HumanoidRootPart")
+		local enHM = enchar:WaitForChild("Humanoid")
+		local instc = char:WaitForChild("Instances")
+		if valueobj["num"] ~= 4 then
+			local KnockerRootWithRootY = rp.Position * Vector3.new(1,0,1) + Vector3.new(0, rp.Position.Y, 0)
+			local bg = logicavisualmodule.bodymover({ "BodyGyro", enrp, Vector3.new(math.huge, math.huge, math.huge),  CFrame.new(enrp.Position, KnockerRootWithRootY), 0.1 })
+			bg.P = 50000
+	
+		logicavisualmodule.StopPlayer(enHM,true)
+		
+		if valueobj["Type"] == "Normal"  then
+			local io
+				local  damage = logicavisualmodule.Damage(player,enchar,4,true)
+				logicavisualmodule.Marker(enchar,valueobj["Legth"],"Hit")
+	logicavisualmodule.Controller(player,{["Sound"] =game.ReplicatedStorage.Sounds.KatanaHit,["LoadType"]="Sound",["Parent"]=char,["PlayBack"]=math.random(1,2)/1.3})
+			spawn(function()
+				wait(0.1)
+				logicavisualmodule.bodymover({ "BodyVelocity", enrp, Vector3.new(1000000, 100000, 1000000), -enrp.CFrame.lookVector*damage, 0.2 })
+			end)
+			local rand = math.random(1,3)
+			if rand ==1  then
+				logicavisualmodule.SetAnimation(enHM,game.ReplicatedStorage.Animatons.GenericAnimationXyiation.hit)
+				elseif rand ==2  then
+					logicavisualmodule.SetAnimation(enHM,game.ReplicatedStorage.Animatons.GenericAnimationXyiation.hit1)
+			       elseif rand ==3  then
+						logicavisualmodule.SetAnimation(enHM,game.ReplicatedStorage.Animatons.GenericAnimationXyiation.hit2)
+			end
+					
+			
+			local random = math.random(1,2) if random==1 then io = game.ReplicatedStorage.Effects.LightHit else io = game.ReplicatedStorage.Effects.LightHit2 end
+			logicavisualmodule.Controller(player,{["1"] ="LightHit",["LoadType"]="Effect",["Effect"]=io,["Time"] =2,["CFrame"] =enrp.CFrame*CFrame.Angles(math.random(1,90),math.random(1,90),math.random(1,90)),})
+			PostEffectsEngine.Blur(enchar,{["Type"]="Little",["MaxDistance"]=7,["Position"]=enrp.Position,["Find"]=true})
+				PostEffectsEngine.Bump(valueobj["Hit"],enrp.Position,7,true)
+	
+			elseif valueobj["Type"] == "Attacking" then
+				logicavisualmodule.Marker(enchar,valueobj["Legth"],"Hit")
+				logicavisualmodule.Marker(char,valueobj["Legth"],"Hit")
+			logicavisualmodule.Controller(player,{["Sound"] =game.ReplicatedStorage.Sounds.Break,["LoadType"]="Sound",["Parent"]=enrp})
+			logicavisualmodule.Controller(player,{["1"] ="WindOutLine",["LoadType"]="Effect",["Effect"]=game.ReplicatedStorage.Effects.WindOutLine,["Time"] =2,["CFrame"] =enrp.CFrame*CFrame.Angles(math.random(1,90),math.random(1,90),math.random(1,90)),})
+			PostEffectsEngine.Blur(enchar,{["Type"]="Little",["MaxDistance"]=7,["Position"]=enrp.Position,["Find"]=true})
+				PostEffectsEngine.Bump(valueobj["Hit"],enrp.Position,7,true)
+				PostEffectsEngine.ColorCorrectionEffect(valueobj["Hit"],{["Type"]="ShortFire",["MaxDistance"]=5,["Position"]=enrp.Position,["Find"]=true},nil)
+				PostEffectsEngine.BloomEffect(valueobj["Hit"],{["Type"]="ShortFire",["MaxDistance"]=5,["Position"]=enrp.Position,["Find"]=true},nil)
+			spawn(function()
+				wait(0.1)
+				logicavisualmodule.bodymover({ "BodyVelocity", rp, Vector3.new(1000000, 100000, 1000000), -rp.CFrame.lookVector*74, 0.1 })
+				logicavisualmodule.bodymover({ "BodyVelocity", enrp, Vector3.new(1000000, 100000, 1000000), -enrp.CFrame.lookVector*74, 0.1 })
+			end)
+		elseif valueobj["Type"] == "Blocking" then
+			logicavisualmodule.Controller(player,{["Sound"] =game.ReplicatedStorage.Sounds.Block,["LoadType"]="Sound",["Parent"]=char,["PlayBack"]=math.random(1,2)/1.3})
+				PostEffectsEngine.BloomEffect(valueobj["Hit"],{["Type"]="HeavyFire",["MaxDistance"]=5,["Position"]=enrp.Position,["Find"]=true},nil)
+				local  damage = logicavisualmodule.Damage(player,enchar,instc:WaitForChild("Attack").Value/2,true)
+			spawn(function()
+					
+					wait(0.1)
+				logicavisualmodule.bodymover({ "BodyVelocity", enrp, Vector3.new(1000000, 100000, 1000000), -enrp.CFrame.lookVector*damage*2, 0.2 })
+			end)
+			PostEffectsEngine.Blur(enchar,{["Type"]="Medium",["MaxDistance"]=7,["Position"]=enrp.Position,["Find"]=true})
+			logicavisualmodule.Controller(player,{["1"] ="BurstEffect",["LoadType"]="Effect",["Effect"]=game.ReplicatedStorage.Effects.BurstEffect,["Time"] =2,["CFrame"] =enrp.CFrame*CFrame.Angles(math.random(1,90),math.random(1,90),math.random(1,90)),})
+			PostEffectsEngine.SmallBump(valueobj["Hit"],enrp.Position,7,true)
+		elseif valueobj["Type"] == "CutScene" then
+			
+		end
+			
+			wait(valueobj["Legth"]*2)
+		if logicavisualmodule.GetState(valueobj["Hit"]) == nil   then
+			logicavisualmodule.StopPlayer(enHM,false)
+		end
+		else 
+			
+			local Settings = {
+				["downpower"] = 200,
+				["maxDownpower"] = -100,
+				["PowerToFly"] = 100,
+				["TimeToFly"] =math.random(3,5),
+
+			}
+			local KnockerRootWithRootY = rp.Position * Vector3.new(1,0,1) + Vector3.new(0, rp.Position.Y, 0)
+			local bg = logicavisualmodule.bodymover({ "BodyGyro", enrp, Vector3.new(math.huge, math.huge, math.huge),  CFrame.new(enrp.Position, KnockerRootWithRootY), 0.1 })
+			bg.P = 70000
+
+		
+			logicavisualmodule.StopPlayer(enHM,true)
+			if valueobj["Type"] == "Normal"  then
+				local io
+				local  damage = logicavisualmodule.Damage(player,enchar,4,true)
+					spawn(function()
+					wait(0.1)
+					logicavisualmodule.Controller(player,{["Sound"] =game.ReplicatedStorage.Sounds.Knockback,["LoadType"]="Sound",["Parent"]=char,["PlayBack"]=math.random(1,2)/1.3})
+					logicavisualmodule.KnockBackSystem(player,enchar,Settings,"Normal",Settings["PowerToFly"]/2)
+
+				end)
+				logicavisualmodule.Marker(enchar,valueobj["Legth"],"Hit")
+				local rand = math.random(1,3)
+				if rand ==1  then
+					logicavisualmodule.SetAnimation(enHM,game.ReplicatedStorage.Animatons.GenericAnimationXyiation.hit)
+				elseif rand ==2  then
+					logicavisualmodule.SetAnimation(enHM,game.ReplicatedStorage.Animatons.GenericAnimationXyiation.hit1)
+				elseif rand ==3  then
+					logicavisualmodule.SetAnimation(enHM,game.ReplicatedStorage.Animatons.GenericAnimationXyiation.hit2)
+				end
+	
+			
+				logicavisualmodule.Controller(player,{["1"] ="HeavyHit",["LoadType"]="Effect",["Effect"]=game.ReplicatedStorage.Effects.HeavyHit,["Time"] =2,["CFrame"] =enrp.CFrame*CFrame.Angles(math.random(1,90),math.random(1,90),math.random(1,90)),})
+				PostEffectsEngine.Blur(enchar,{["Type"]="Little",["MaxDistance"]=7,["Position"]=enrp.Position,["Find"]=true})
+				PostEffectsEngine.BigExplosion(valueobj["Hit"],enrp.Position,7,true)
+			elseif valueobj["Type"] == "Attacking" then
+				logicavisualmodule.Controller(player,{["Sound"] =game.ReplicatedStorage.Sounds.Break,["LoadType"]="Sound",["Parent"]=enrp})
+				logicavisualmodule.Controller(player,{["1"] ="WindOutLine",["LoadType"]="Effect",["Effect"]=game.ReplicatedStorage.Effects.WindOutLine,["Time"] =2,["CFrame"] =enrp.CFrame*CFrame.Angles(math.random(1,90),math.random(1,90),math.random(1,90)),})
+				logicavisualmodule.Marker(enchar,valueobj["Legth"],"Hit")
+				logicavisualmodule.Marker(char,valueobj["Legth"],"Hit")
+				PostEffectsEngine.Blur(enchar,{["Type"]="Little",["MaxDistance"]=7,["Position"]=enrp.Position,["Find"]=true})
+				PostEffectsEngine.Bump(valueobj["Hit"],enrp.Position,7,true)
+				PostEffectsEngine.ColorCorrectionEffect(valueobj["Hit"],{["Type"]="ShortFire",["MaxDistance"]=5,["Position"]=enrp.Position,["Find"]=true},nil)
+				PostEffectsEngine.BloomEffect(valueobj["Hit"],{["Type"]="HeavyFire",["MaxDistance"]=5,["Position"]=enrp.Position,["Find"]=true},nil)
+
+				spawn(function()
+					wait(0.1)
+					logicavisualmodule.bodymover({ "BodyVelocity", rp, Vector3.new(1000000, 100000, 1000000), -rp.CFrame.lookVector*74, 0.1 })
+					logicavisualmodule.bodymover({ "BodyVelocity", enrp, Vector3.new(1000000, 100000, 1000000), -enrp.CFrame.lookVector*74, 0.1 })
+				end)
+			elseif valueobj["Type"] == "Blocking" then
+				logicavisualmodule.DisableState(enchar)
+				PostEffectsEngine.BloomEffect(valueobj["Hit"],{["Type"]="HeavyFire",["MaxDistance"]=5,["Position"]=enrp.Position,["Find"]=true},nil)
+				logicavisualmodule.Marker(enchar,valueobj["Legth"],"Hit")
+				logicavisualmodule.Controller(player,{["Sound"] =game.ReplicatedStorage.Sounds.Break,["LoadType"]="Sound",["Parent"]=char,["PlayBack"]=0.9})
+				local  damage = logicavisualmodule.Damage(player,enchar,instc:WaitForChild("Attack").Value/2,true)
+				spawn(function()
+					wait(0.1)
+					logicavisualmodule.bodymover({ "BodyVelocity", enrp, Vector3.new(1000000, 100000, 1000000), -enrp.CFrame.lookVector*damage, 0.2 })
+				end)
+				PostEffectsEngine.Blur(enchar,{["Type"]="Medium",["MaxDistance"]=7,["Position"]=enrp.Position,["Find"]=true})
+				logicavisualmodule.Controller(player,{["1"] ="HeavyHit",["LoadType"]="Effect",["Effect"]=game.ReplicatedStorage.Effects.HeavyHit,["Time"] =2,["CFrame"] =enrp.CFrame*CFrame.Angles(math.random(1,90),math.random(1,90),math.random(1,90)),})
+				PostEffectsEngine.SmallBump(valueobj["Hit"],enrp.Position,7,true)
+			elseif valueobj["Type"] == "CutScene" then
+
+			end
+
+			wait(valueobj["Legth"]*2)
+			if logicavisualmodule.GetState(valueobj["Hit"]) == nil   then
+				logicavisualmodule.StopPlayer(enHM,false)
+			end
+		end
+	end
+
+if valueobj["TypeSelect"] =="ReturnChar" then
+		logicavisualmodule.StopPlayer(Hm,valueobj["SetStop"])	
+	
+elseif valueobj["TypeSelect"] =="Start" then
+		local obj = script.Parent.Katana:Clone()
+		local objnamesaver = obj.Name
+		obj.Parent = la
+		local objWeldFile = obj:findFirstChild(objnamesaver)
+		objWeldFile.Part0 = la
+		objWeldFile.Part1 = obj
+		spawn(function()
+			for i,v in pairs(obj:GetDescendants()) do
+				if v.ClassName == "Part" and v.Name ~= "HitBox" then
+					v.Transparency = 0
+				end
+			end
+		end)
+
+		
+		return obj
+	elseif valueobj["TypeSelect"] =="Slash" then
+		if valueobj["num"] ~=3 and 4 then
+			local bp =	logicavisualmodule.bodymover({ "BodyPosition", rp, Vector3.new(100000, 100000, 100000),rp.Position, 0.15 })
+			logicavisualmodule.bodymover({ "BodyGyro", rp, Vector3.new(10000, 10000, 10000), rp.CFrame, 0.15 })
+			local i, v = workspace:FindPartOnRay(Ray.new(rp.Position, rp.CFrame.lookVector.unit * 9), char)
+			if i then
+				bp.Position = v - rp.CFrame.lookVector * 3
+			else
+				bp.Position = rp.Position + rp.CFrame.lookVector * 8
+			end	
+			
+		end
+		if valueobj["num"] == 1 then
+			SlashTexMiniControl(0.35)
+			
+		logicavisualmodule.Controller(player,{["Sound"] =game.ReplicatedStorage.Sounds.KatanaSwing,["LoadType"]="Sound",["Parent"]=char,["PlayBack"]=math.random(1,2)/1.3})
+		logicavisualmodule.Marker(char,0.35,"Attacking")
+		local tab  ={["1"] ="SlashEffect",
+			["LoadType"]="Effect",
+			["Fire"]="FireAllClients",
+			["Time"] =0.31,
+			["CFrame"] =rp.CFrame,
+			["Size"] = 1.9,
+			["Color"] = Color3.new(1, 1, 1),
+			["Anim"] = script.Parent.ModAnims.Slash1,
+			["Character"] = char}
+		logicavisualmodule.Controller(player,tab)
+		elseif valueobj["num"] == 2 then
+			SlashTexMiniControl(0.35)
+			logicavisualmodule.Controller(player,{["Sound"] =game.ReplicatedStorage.Sounds.KatanaSwing,["LoadType"]="Sound",["Parent"]=char,["PlayBack"]=math.random(1,2)/1.3})
+		logicavisualmodule.Marker(char,0.35,"Attacking")
+		local tab  ={["1"] ="SlashEffect",
+			["LoadType"]="Effect",
+			["Fire"]="FireAllClients",
+			["Time"] =0.31,
+			["CFrame"] =rp.CFrame,
+			["Size"] = 1.9,
+			["Color"] = Color3.new(1, 1, 1),
+			["Anim"] = script.Parent.ModAnims.Slash2,
+			["Character"] = char}
+		logicavisualmodule.Controller(player,tab)
+
+		elseif valueobj["num"] == 3 then
+			SlashTexMiniControl(1)
+			spawn(function()
+				local bp =	logicavisualmodule.bodymover({ "BodyPosition", rp, Vector3.new(100000, 100000, 100000),rp.Position, 0.15 })
+				logicavisualmodule.bodymover({ "BodyGyro", rp, Vector3.new(10000, 10000, 10000), rp.CFrame, 0.15 })
+				local i, v = workspace:FindPartOnRay(Ray.new(rp.Position, rp.CFrame.lookVector.unit * 9), char)
+				if i then
+					bp.Position = v - rp.CFrame.lookVector * 3
+				else
+					bp.Position = rp.Position + rp.CFrame.lookVector * 8
+				end	
+
+				logicavisualmodule.Controller(player,{["Sound"] =game.ReplicatedStorage.Sounds.KatanaSwing,["LoadType"]="Sound",["Parent"]=char,["PlayBack"]=math.random(1,2)/1.3})
+			wait(0.3)
+				local bp =	logicavisualmodule.bodymover({ "BodyPosition", rp, Vector3.new(100000, 100000, 100000),rp.Position, 0.15 })
+				logicavisualmodule.bodymover({ "BodyGyro", rp, Vector3.new(10000, 10000, 10000), rp.CFrame, 0.15 })
+				local i, v = workspace:FindPartOnRay(Ray.new(rp.Position, rp.CFrame.lookVector.unit * 9), char)
+				if i then
+					bp.Position = v - rp.CFrame.lookVector * 3
+				else
+					bp.Position = rp.Position + rp.CFrame.lookVector * 8
+				end	
+
+				logicavisualmodule.Controller(player,{["Sound"] =game.ReplicatedStorage.Sounds.KatanaSwing,["LoadType"]="Sound",["Parent"]=char,["PlayBack"]=math.random(1,2)/1.3})
+			end)
+
+		logicavisualmodule.Marker(char,1,"Attacking")
+		local tab  ={["1"] ="SlashEffect",
+			["LoadType"]="Effect",
+			["Fire"]="FireAllClients",
+			["Time"] =1.1,
+			["CFrame"] =rp.CFrame * CFrame.new(0,0,0),
+			["Size"] = 4,
+			["Color"] = Color3.new(1, 1, 1),
+			["Anim"] = script.Parent.ModAnims.Slash3,
+			["Character"] = char}
+		logicavisualmodule.Controller(player,tab)
+		elseif valueobj["num"] ==4 then
+			logicavisualmodule.Controller(player,{["1"] ="Wind",["LoadType"]="Effect",["Effect"]=game.ReplicatedStorage.Effects.Wind,["Time"] =3,["CFrame"] =rp.CFrame,})
+			local bp =	logicavisualmodule.bodymover({ "BodyPosition", rp, Vector3.new(100000, 100000, 100000),rp.Position, 0.15 })
+			logicavisualmodule.bodymover({ "BodyGyro", rp, Vector3.new(10000, 10000, 10000), rp.CFrame, 0.15 })
+			local i, v = workspace:FindPartOnRay(Ray.new(rp.Position, rp.CFrame.lookVector.unit * 3), char)
+			if i then
+				bp.Position = v - rp.CFrame.lookVector * 2
+			else
+				bp.Position = rp.Position + rp.CFrame.lookVector * 14
+			end	
+			logicavisualmodule.Marker(char,1,"Attacking")
+		logicavisualmodule.Controller(player,{["Sound"] =game.ReplicatedStorage.Sounds.SwingEffect,["LoadType"]="Sound",["Parent"]=char,["PlayBack"]=math.random(1,2)/1.3})
+			PostEffectsEngine.Custom(char,rp.Position,7,true,{["magnitude"]=0.4,["roughness"]=20,["fadeInTime"]=0.2,["fadeOutTime"]=0.2})
+	end	
+ end	
+end
