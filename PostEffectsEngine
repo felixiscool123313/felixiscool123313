@@ -1,0 +1,224 @@
+--------exampleyousing-------------
+----AcceptanceTransformer.Accept(PostEffectsEngine.BigExplosion,char,rp.Position,5,true)
+----AcceptanceTransformer.Accept(PostEffectsEngine.SmallBlur,char,rp.Position,5,true)
+local camera = workspace.CurrentCamera
+local CameraShaker = require(script.CameraShaker)
+local function ShakeCamera(shakeCf)
+	camera.CFrame = camera.CFrame * shakeCf
+end
+local RunService = game:GetService("RunService")
+local customshakedefaultSettings = { 
+	["magnitude"] = 3,
+	["roughness"] = 1,
+	["fadeInTime"] =  0.2,
+	["fadeOutTime"] = 1.5
+}
+local renderPriority = Enum.RenderPriority.Camera.Value+2
+local camShake = CameraShaker.new(renderPriority, ShakeCamera)
+ 
+local PostEffectsEngine = {}
+local player = game.Players.LocalPlayer
+local remoteshaker = game.ReplicatedStorage.Remotes.CameraShaker
+local Blur = game.ReplicatedStorage.Remotes.Blur
+local ColorCorrection = game.ReplicatedStorage.Remotes.ColorCorrection
+local BloomEffect = game.ReplicatedStorage.Remotes.BloomEffect
+------------PostEffectsEngine.Bump(Parent,Pos,MaxDistance,Enabled)---------
+local camera = workspace.CurrentCamera
+local remote = game.ReplicatedStorage.Remotes
+local CameraShaker = require(game.ReplicatedStorage.PostEffectsEngine.CameraShaker)
+local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCFrame)
+	camera.CFrame = camera.CFrame * shakeCFrame
+end)
+local function shakelocal(TypeShake,TableforCustom)
+	if TypeShake == "Explosion" then
+		camShake:Shake(CameraShaker.Presets.Explosion)
+	elseif 	TypeShake == "SmallBump" then
+		camShake:Shake(CameraShaker.Presets.SmallBump)
+	elseif 	TypeShake == "BigExplosion" then
+		camShake:Shake(CameraShaker.Presets.BigExplosion)
+	elseif 	TypeShake == "Bump" then
+		camShake:Shake(CameraShaker.Presets.Bump)
+	elseif 	TypeShake == "Earthquake" then
+		camShake:Shake(CameraShaker.Presets.Earthquake)
+	elseif 	TypeShake == "Vibration" then
+		camShake:Shake(CameraShaker.Presets.Vibration)
+	elseif TypeShake == "Custom" then
+		camShake:ShakeOnce(TableforCustom["magnitude"],TableforCustom["roughness"],TableforCustom["fadeInTime"],TableforCustom["fadeOutTime"])
+	end
+end
+camShake:Start()
+local function ChakeAccept(TypeShake,Parent,Pos,MaxDistance,Enabled,TableCustom)
+	if RunService:IsClient() then
+		shakelocal(TypeShake,TableCustom)
+	else 
+		if Enabled == true then	
+			for i,v in pairs(game.Players:GetChildren()) do				
+				if v.Character:findFirstChild("Humanoid") and v:DistanceFromCharacter(Pos) < MaxDistance and v:DistanceFromCharacter(Pos) > 0 then					
+					local pla = v
+					if TypeShake == "Custom" then
+						remoteshaker:FireClient(pla,nil,TypeShake,TableCustom)
+					else
+						remoteshaker:FireClient(pla,nil,TypeShake)
+					end
+
+				end
+			end	
+			
+		elseif  Enabled == false and Pos == nil and MaxDistance == nil then	
+			local pla = game.Players:GetPlayerFromCharacter(Parent)
+			if TypeShake == "Custom" then
+				remoteshaker:FireClient(pla,nil,TypeShake,TableCustom)
+			else
+				remoteshaker:FireClient(pla,nil,TypeShake)
+			end
+
+		elseif  Enabled == false  then	
+			local pla = game.Players:GetPlayerFromCharacter(Parent)
+			if TypeShake == "Custom" then
+				remoteshaker:FireClient(pla,nil,TypeShake,TableCustom)
+			else
+				remoteshaker:FireClient(pla,nil,TypeShake)
+			end
+
+		end	
+	end
+
+end
+local function BlurAccept(TypeBlur,Parent,Pos,MaxDistance,Enabled,TableCustom)
+
+		if Enabled == true then	
+			for i,v in pairs(game.Players:GetChildren()) do				
+				if v.Character:findFirstChild("Humanoid") and v:DistanceFromCharacter(Pos) < MaxDistance and v:DistanceFromCharacter(Pos) > 0 then					
+					local pla = v
+				if TypeBlur == "Custom" then
+					Blur:FireClient(pla,nil,TypeBlur,TableCustom)
+				else
+				
+					Blur:FireClient(pla,nil,TypeBlur)
+					end
+
+				end
+			end	
+
+		elseif  Enabled == false and Pos == nil and MaxDistance == nil then	
+			local pla = game.Players:GetPlayerFromCharacter(Parent)
+		if TypeBlur == "Custom" then
+			Blur:FireClient(pla,nil,TypeBlur,TableCustom)
+			else
+			Blur:FireClient(pla,nil,TypeBlur)
+			end
+
+		elseif  Enabled == false  then	
+			local pla = game.Players:GetPlayerFromCharacter(Parent)
+		if TypeBlur == "Custom" then
+			Blur:FireClient(pla,nil,TypeBlur,TableCustom)
+			else
+			Blur:FireClient(pla,nil,TypeBlur)
+			end
+
+		end	
+	
+
+end
+local function CorrectionEffectAccept(TypeCorrectionEffect,Parent,Pos,MaxDistance,Enabled,TableCustom)
+	if Enabled == true then	
+		for i,v in pairs(game.Players:GetChildren()) do				
+			if v.Character:findFirstChild("Humanoid") and v:DistanceFromCharacter(Pos) < MaxDistance and v:DistanceFromCharacter(Pos) > 0 then					
+				local pla = v
+				if TypeCorrectionEffect == "Custom" then
+					ColorCorrection:FireClient(pla,nil,TypeCorrectionEffect,TableCustom)
+				else
+					ColorCorrection:FireClient(pla,nil,TypeCorrectionEffect)
+				end
+			end
+		end	
+
+	elseif  Enabled == false and Pos == nil and MaxDistance == nil then	
+		local pla = game.Players:GetPlayerFromCharacter(Parent)
+		if TypeCorrectionEffect == "Custom" then
+			ColorCorrection:FireClient(pla,nil,TypeCorrectionEffect,TableCustom)
+		else
+			ColorCorrection:FireClient(pla,nil,TypeCorrectionEffect)
+		end
+	elseif  Enabled == false  then	
+		local pla = game.Players:GetPlayerFromCharacter(Parent)
+		if TypeCorrectionEffect == "Custom" then
+			ColorCorrection:FireClient(pla,nil,TypeCorrectionEffect,TableCustom)
+		else
+			ColorCorrection:FireClient(pla,nil,TypeCorrectionEffect)
+		end
+	end	
+end
+local function BloomEffectAccept(TypeBloomEffect,Parent,Pos,MaxDistance,Enabled,TableCustom)
+	if Enabled == true then	
+		for i,v in pairs(game.Players:GetChildren()) do				
+			if v.Character:findFirstChild("Humanoid") and v:DistanceFromCharacter(Pos) < MaxDistance and v:DistanceFromCharacter(Pos) > 0 then					
+				local pla = v
+				if TypeBloomEffect == "Custom" then
+					BloomEffect:FireClient(pla,nil,TypeBloomEffect,TableCustom)
+				else
+					BloomEffect:FireClient(pla,nil,TypeBloomEffect)
+				end
+			end
+		end	
+
+	elseif  Enabled == false and Pos == nil and MaxDistance == nil then	
+		local pla = game.Players:GetPlayerFromCharacter(Parent)
+		if TypeBloomEffect == "Custom" then
+			BloomEffect:FireClient(pla,nil,TypeBloomEffect,TableCustom)
+		else
+			BloomEffect:FireClient(pla,nil,TypeBloomEffect)
+		end
+	elseif  Enabled == false  then	
+		local pla = game.Players:GetPlayerFromCharacter(Parent)
+		if TypeBloomEffect == "Custom" then
+			BloomEffect:FireClient(pla,nil,TypeBloomEffect,TableCustom)
+		else
+			BloomEffect:FireClient(pla,nil,TypeBloomEffect)
+		end
+	end	
+end
+function PostEffectsEngine.Bump(Parent,Pos,MaxDistance,Enabled)
+local TypeShake = "Bump"
+	ChakeAccept(TypeShake,Parent,Pos,MaxDistance,Enabled,nil)
+end
+function PostEffectsEngine.SmallBump(Parent,Pos,MaxDistance,Enabled)
+	local TypeShake = "SmallBump"
+	ChakeAccept(TypeShake,Parent,Pos,MaxDistance,Enabled,nil)
+end
+function PostEffectsEngine.Custom(Parent,Pos,MaxDistance,Enabled,Tabl)
+	local TypeShake = "Custom"
+
+	if Tabl == nil then
+		ChakeAccept(TypeShake,Parent,Pos,MaxDistance,Enabled,customshakedefaultSettings)
+	else
+		ChakeAccept(TypeShake,Parent,Pos,MaxDistance,Enabled,Tabl)
+	end
+
+end
+function PostEffectsEngine.Vibration(Parent,Pos,MaxDistance,Enabled)
+	local TypeShake = "Vibration"
+	ChakeAccept(TypeShake,Parent,Pos,MaxDistance,Enabled,nil)
+end
+function PostEffectsEngine.Explosion(Parent,Pos,MaxDistance,Enabled)
+	local TypeShake = "Explosion"
+	ChakeAccept(TypeShake,Parent,Pos,MaxDistance,Enabled,nil)
+end
+function PostEffectsEngine.BigExplosion(Parent,Pos,MaxDistance,Enabled)
+	local TypeShake = "BigExplosion"
+	ChakeAccept(TypeShake,Parent,Pos,MaxDistance,Enabled,nil)
+end
+function PostEffectsEngine.Earthquake(Parent,Pos,MaxDistance,Enabled)
+	local TypeShake = "BigExplosion"
+	ChakeAccept(TypeShake,Parent,Pos,MaxDistance,Enabled,nil)
+end
+function PostEffectsEngine.Blur(Parent,tabl1,tabl2)
+	BlurAccept(tabl1["Type"],Parent,tabl1["Position"],tabl1["MaxDistance"],tabl1["Find"],tabl2)
+end
+function PostEffectsEngine.ColorCorrectionEffect(Parent,tabl1,tabl2)
+	CorrectionEffectAccept(tabl1["Type"],Parent,tabl1["Position"],tabl1["MaxDistance"],tabl1["Find"],tabl2)
+end
+function PostEffectsEngine.BloomEffect(Parent,tabl1,tabl2)
+	BloomEffectAccept(tabl1["Type"],Parent,tabl1["Position"],tabl1["MaxDistance"],tabl1["Find"],tabl2)
+end
+return PostEffectsEngine
