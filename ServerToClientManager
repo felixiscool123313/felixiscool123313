@@ -1,0 +1,131 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+local char = player.character
+local logicavisualmodule = require(game.ReplicatedStorage.logicavisualmodule)
+local Mouse = player:GetMouse()
+function MouseDistanceLimit(rp,Mouse, LimitCount)
+	if not (LimitCount < (Mouse - rp.Position).magnitude) then
+		return Mouse
+	end
+	return (CFrame.new(rp.Position, Mouse) * CFrame.new(0, 0, -LimitCount)).p
+end
+game.ReplicatedStorage.Remotes.ClientActive.OnClientInvoke = function(pl,valueobj)
+	if not player.Character then
+		return
+	end	
+	local GeneralVal = valueobj[1]
+
+	if  GeneralVal == "getMousePosWithDistanceLimit" then
+		local MaxDistance =valueobj[2]
+		local char = player.Character
+		local rp = char:WaitForChild("HumanoidRootPart")
+		local io 
+		io = MouseDistanceLimit(rp,Mouse.Hit.Position,MaxDistance)
+		return io 
+	end
+	
+	
+	if GeneralVal == "ShowDamage" then
+spawn(function()
+	
+		local DamageMenu = player.PlayerGui.UI.DamageMenu
+		local Damage = DamageMenu.Damage
+		local Hits = DamageMenu.Hits
+		local NewDamageVal = Damage.Value + valueobj[2]
+		local NewHitVal = Hits.Value + 1
+		if DamageMenu.HitAmount.TextTransparency == 1 then
+			DamageMenu.HitAmount.TextTransparency = 0
+		end
+		if DamageMenu.DamageAmount.TextTransparency == 1 then
+			DamageMenu.DamageAmount.TextTransparency = 0
+		end
+		Damage.Value = NewDamageVal
+		Hits.Value = NewHitVal
+		spawn(function()
+			spawn(function()
+			local Tween = logicavisualmodule.CreateTween(DamageMenu.HitAmount, { 0.1, Enum.EasingStyle.Back, Enum.EasingDirection.In, 0, false, 0 }, {
+				Size = UDim2.new(0.250, 0, 0.079, 0),
+				
+				}, true)
+			end)
+			spawn(function()
+			local Tween2 = logicavisualmodule.CreateTween(DamageMenu.DamageAmount, { 0.1, Enum.EasingStyle.Back, Enum.EasingDirection.In, 0, false, 0 }, {
+				Size = UDim2.new(0.250, 0, 0.079, 0),
+			
+				}, true)
+				end)
+			wait(0.1)
+			spawn(function()
+			local Tween3 = logicavisualmodule.CreateTween(DamageMenu.HitAmount, { 0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, 0 }, {
+				Size = UDim2.new(0.215, 0, 0.044, 0),
+			
+				}, true)
+			end)
+			spawn(function()
+			local Tween4 = logicavisualmodule.CreateTween(DamageMenu.DamageAmount, { 0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, 0 }, {
+				Size = UDim2.new(0.215, 0, 0.044, 0),
+				
+				}, true)
+				end)
+		end)
+		if Damage.Value >= 15 and Damage.Value < 35 then
+			DamageMenu.DamageAmount.TextColor3 = Color3.new(1, 1, 0)
+		elseif Damage.Value >= 35 and Damage.Value <55 then
+			DamageMenu.DamageAmount.TextColor3 = Color3.new(1, 0, 0)
+		elseif Damage.Value >= 55  then
+			DamageMenu.DamageAmount.TextColor3 = Color3.new(1, 0, 0)
+			DamageMenu.DamageAmount.RichText = true
+		end
+		if Hits.Value >= 35 and Hits.Value < 55 then
+			DamageMenu.HitAmount.TextColor3 = Color3.new(1, 1, 0)
+		elseif Hits.Value >= 55 and Hits.Value < 75 then
+			DamageMenu.HitAmount.TextColor3 = Color3.new(1, 0, 0)
+		elseif Hits.Value >75	then
+			DamageMenu.HitAmount.TextColor3 = Color3.new(1, 0, 0)
+			DamageMenu.HitAmount.RichText = true
+		end
+		
+		DamageMenu.HitAmount.Text = NewHitVal .. " Hits"
+		DamageMenu.DamageAmount.Text = math.floor(NewDamageVal + 0.5) .. " Damage"
+		wait(6.5)
+		if Damage.Value == NewDamageVal then
+			if DamageMenu.HitAmount.RichText == true then
+				DamageMenu.HitAmount.RichText = false
+			end
+			if DamageMenu.DamageAmount.RichText == true then
+				DamageMenu.DamageAmount.RichText = false
+			end
+		Damage.Value = 0
+			Hits.Value = 0
+			spawn(function()
+			if DamageMenu.HitAmount.TextTransparency == 0 then
+	 local Tween1 = logicavisualmodule.CreateTween(DamageMenu.HitAmount, { 0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, 0 }, {
+					TextTransparency = 1,
+					TextColor3 = Color3.new(1, 1, 1)
+				}, true)
+			
+				end
+			end)
+			spawn(function()
+		if DamageMenu.DamageAmount.TextTransparency == 0 then
+				local Tween1 = logicavisualmodule.CreateTween(DamageMenu.DamageAmount, { 0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out, 0, false, 0 }, {
+					TextTransparency = 1,
+					TextColor3 = Color3.new(1, 1, 1)
+				}, true)
+		end
+end)
+		end
+			end)
+		end
+	if  GeneralVal == "getlockon" then
+		local char = player.Character
+		if not char:FindFirstChild("LockOnScript") or not char:FindFirstChild("LockOnScript").LockOn.Value then
+			return false
+		end
+		return char:FindFirstChild("LockOnScript").LockOn.Value
+	
+		
+	end
+	
+end
